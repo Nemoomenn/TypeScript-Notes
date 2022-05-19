@@ -6,6 +6,8 @@ As TypeScript code can be compiled to ES5, it includes all of the JavaScript fea
 # Types
 For programs to be useful, we need to be able to work with some of the simplest units of data: numbers, strings, structures, boolean values, and the like. In TypeScript support much the same types as you would expect in JavaScript, with a convenient enumeration type thrown in to help things along.
 
+
+
 ## Basic Assign Types
 
 #### String
@@ -353,3 +355,227 @@ class Person {
   // person.setType('Cool guy'); // Not possible, since setType is a private member of Person.
 
 ```
+
+## Private Members
+
+When a member is marked private, it cannot be accessed from outside of its containing class. However, should a class X inherit properties from Person, class A will be able to access all private properties from Person (e.g. type and setType) due to being inside (or having access to) the protected scope. More on what class inheritance is all about just below, but here's an example;
+
+``` ts 
+class Type {
+      private type: string | null = null;
+
+      setType = (type: string) => {
+        this.type = type;
+        console.log(this.type);
+      }
+  }
+
+  class Person extends Type {
+      protected age: number = 23;
+
+      constructor(public name: string, public userName: string, private email: string) {
+        super()
+        this.name = name;
+        this.userName = userName;
+        this.email = email;
+      }
+
+      public printAge = () => {
+        console.log(this.age);
+        this.setType('Young guy');
+      }
+  }
+
+  const person = new Person('Rob', 'rm', 'email');
+
+  person.setType('Cool guy'); // Prints: Cool guy
+
+  console.log(person); // Prints:
+  /**
+   * Person
+   *
+   * age: 23
+   * email: "email"
+   * name: "Rob"
+   * printAge: ƒ ()
+   * setType: ƒ (type)
+   * type: "Cool guy"
+   * userName: "rm"
+   *
+   */
+
+```
+
+
+If you want to prevent some properties or classes for being inherited, there is currently a proposal for the `final` keyword to be added.
+
+Links:
+
+- [Suggestion: Final keyword for classes and methods](https://github.com/Microsoft/TypeScript/issues/9264)
+- [Support final classes (non-subclassable)](https://github.com/Microsoft/TypeScript/issues/8306)
+
+
+## Class Inheritance
+
+Classes may also be extended. By extending a class, we can declare another class that inherits all of the parent class members, for example:
+
+```ts
+  class Prashant extends Person {
+    constructor(userName: string, email: string) {
+      super('Hari narayan', userName, email);
+      this.age = 25;
+      this.printAge()
+    }
+  }
+
+  const prashant = new Prashant('Prashant', 'example@email.com');
+
+  console.log(prashant);
+
+
+```
+The class Prashant, would be able to access all of the Person members, and overwrite them if possible. Note that super has to be called in the constructor of the Prashant class, to execute any logic that may be stored inside the parent Person class' constructor. If not called, side effects may happen.
+
+## Getters & Setters
+
+TypeScript offers two great features for classes: get, and set. These are keywords that can be used to create a getter or setter function that can share the same name, and run whatever logic the programmer decides to pass into. Here's an example:
+
+``` ts
+  class Plant {
+    private _species: string = 'Default';
+    get species() {
+      return this._species;
+    }
+    set species(value: string) {
+      if (value.length > 3) {
+        this._species = value;
+      } else {
+        this._species = 'Default';
+      }
+    }
+    public getSpecies = () => this._species
+  }
+
+  const plant = new Plant();
+
+  console.log(plant.species); // Prints Default
+  plant.species = 'AB';
+  console.log(plant.species); // Prints Default
+  plant.species = 'Green Plant';
+  console.log(plant.species); // Prints Green Plant
+```
+To set species, we would do an expression such as plant.species = 'AB';, and to get species, we would simply refer to the species property of the plant object.
+
+
+## Static Properties & Methods
+
+Static properties and methods are class members that can be accessed from an outer scope of the class, and without having to instantiate the class either. Here's an example:
+
+``` ts
+  class Helpers {
+    static PI: number = 3.14;
+    static calcCircumference(diameter: number): number {
+      return this.PI * diameter;
+    }
+  }
+
+  console.log(Helpers.PI); // Prints: 3.14
+  console.log(2 * Helpers.PI); // Prints: 6.28
+  console.log(Helpers.calcCircumference(10)); // Prints: 31.42
+
+```
+
+## Abstract Classes
+
+Abstract classes are base classes from which other classes may be derived. They may not be instantiated directly. Unlike an interface, an abstract class may contain implementation details for its members. The abstract keyword is used to define abstract classes as well as abstract methods within an abstract class.
+
+A great comparison and example for abstract classes is the React.js Component class, that we use to extend our own custom components, like the typical:
+
+
+``` react
+  class App extends Component {
+    ...
+  }
+```
+
+The following is an example of a TypeScript abstract class definition:
+
+
+``` ts
+  abstract class Project {
+    projectName: string = 'Default';
+    budget: number = 0;
+    abstract changeName(name: string): void;
+    calcBudget() {
+      return this.budget * 2;
+    }
+  }
+```
+
+Methods within an abstract class that are marked as abstract do not contain an implementation and must be implemented in derived classes. Abstract methods share a similar syntax to interface methods. Both define the signature of a method without including a method body. However, abstract methods must include the abstract keyword and may optionally include access modifiers.
+
+**Think of abstract methods as methods that won't be passed down to the inheritor classes.**
+
+```ts
+class ITProject extends Project {
+    changeName = (name: string) => {
+      this.projectName = name;
+    }
+  }
+
+  const newProject = new ITProject();
+
+  console.log(newProject) // Prints: { projectName: "Default", budget: 0, ...  }
+  newProject.changeName('Super IT Project');
+  console.log(newProject); // Prints: { projectName: "'Super IT Project", budget: 0, ...  }
+  newProject.budget = 1000;
+  console.log(newProject.budget); // Prints: 1000
+  console.log(newProject.calcBudget()); // Prints: 2000
+
+
+```
+
+## Private Constructors & Singletons
+
+At first glance you may realize that private constructors sound strange, you might ask yourself, what's the point of making the constructor method private, resulting in the programmer not being able to call the new method, which then makes creating new instances of the class impossible? Quite the contrary.
+
+As the name of this section implies, a singleton is a class that can only be instantiated once, or in other words, a class that can only have one object, single(ton).
+
+In TypeScript 2.0 and onwards, we can create a static class member method that I usually define as getInstance. Since getInstance is a member of the class, it can access the constructor. Meaning, it can execute the constructor, then save the instance as a member of the same class. It is also possible to improve this further, and only allow getInstance to be executed only once, and avoid multiple instances of this class.
+
+If it already exists, we can always return the previously created instance, here's an example with a class named OnlyOne:
+
+``` ts
+  class OnlyOne {
+    private static instance: OnlyOne; // Member variable that will store the OnlyOne instance.
+
+    /**
+     * Read only property that can not be modified nor accessed outside of the class.
+     */
+    private constructor(public readonly name: string) {}
+
+    /**
+     * If get instance has not been initialized then it will construct a new OnlyOne class object,
+     * then store it into the instance property. If it has already been created then it will simply
+     * return the instance property.
+     * This assures that there will only ever be one instance.
+     */
+    static getInstance() {
+      if (!OnlyOne.instance) {
+        OnlyOne.instance = new OnlyOne('The Only One');
+      }
+      return OnlyOne.instance;
+    }
+  }
+
+  // const wrongWay = new OnlyOne('The Only One') // Not Possible
+  const rightWay = OnlyOne.getInstance();
+  const anotherWay = OnlyOne.getInstance(); // Works too.
+
+```
+
+In the above example, the variables rightWay and anotherWay would be pointers (think C++) to the same instance of OnlyOne. As you can see, to initiate OnlyOne we have to call getInstance instead of running the constructor from an outter scope of the OnlyOne class.
+
+Afterwards, it is possible to call any of the other public methods of the class. You'd use this for things like managing global toast messages inside an application, with a single class instance managing every message. Another common use case is when front-end code (e.g. React/Vue/Angular) speaks to a backend such as Amazon's AWS or Google's Firebase platforms. In that case you'd use the AWS or Firebase SDK inside the frontent to create a singleton class instance inside the client device. That singleton class instance would provide the frontend code with all kinds of utility methods, such as, for example, backend specific methods to store data from the frontend into some backend storage e.g. Firebase's firestore database or Amazon's S3 storage bucket.
+
+
