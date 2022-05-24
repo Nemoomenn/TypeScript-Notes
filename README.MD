@@ -579,3 +579,104 @@ In the above example, the variables rightWay and anotherWay would be pointers (t
 Afterwards, it is possible to call any of the other public methods of the class. You'd use this for things like managing global toast messages inside an application, with a single class instance managing every message. Another common use case is when front-end code (e.g. React/Vue/Angular) speaks to a backend such as Amazon's AWS or Google's Firebase platforms. In that case you'd use the AWS or Firebase SDK inside the frontent to create a singleton class instance inside the client device. That singleton class instance would provide the frontend code with all kinds of utility methods, such as, for example, backend specific methods to store data from the frontend into some backend storage e.g. Firebase's firestore database or Amazon's S3 storage bucket.
 
 
+## Modules
+
+Modules are executed within their own scope, not in the global scope; this means that variables, functions, classes, etc. declared in a module are not visible outside the module unless they are explicitly exported using one of the export forms. Conversely, to consume a variable, function, class, interface, etc. exported from a different module, it has to be imported using one of the import forms.
+
+The module code generation may be specified in the tsconfig.json file. The compiler will generate appropriate code for Node.js (CommonJS), requirejs (AMD), UMD, SystemJS, or ECMAScript 2015 native modules (ES6) module-loading systems depending on what the tsconfig.json module option is set on. For example, the React.js tsconfig.json file generated when using create-react-app module code generation option is esnext, targeted to es5.
+
+In TypeScript, any file containing a top-level import or export is considered a module. Conversely, a file without any top-level import or export declarations is treated as a script whose contents are available in the global scope (and therefore to modules as well).
+
+1. Export
+2. Default Exports
+3. Import
+4. Advanced Module Loading
+
+### Export
+
+Any declaration (such as a variable, function, class, type alias, enum or interface) can be exported by adding the export keyword.
+
+Exporting a variable and a function:
+
+``` ts
+export const PI = 3.14;
+
+  export const calculateCircumference = (diameter: number) => {
+    return diameter * PI;
+  }
+
+```
+
+Exporting an interface for a react.js class component's state:
+
+```ts 
+  export interface IAppState {
+    counterValue: number;
+  }
+
+  class App extends React.Component<{} /* IAppProps */, IAppState> {
+    public state = { counterValue: 0 }; // State is required to be public.
+    // ...
+  }
+```
+Exporting an interface for a react.js functional component onClick handlers:
+
+```ts
+  export enum ECounterHandlers {
+    Inc,
+    Dec
+  }
+  interface ICounterOutputProps {
+    counter: number;
+    onClick: (mode: ECounterHandlers) => void;
+  }
+  const counterOutput = (props: ICounterOutputProps) => {
+    return (
+      /// ...
+        <button onClick={() => props.onClick(ECounterHandlers.Dec)}>Decrement</button>
+        <button onClick={() => props.onClick(ECounterHandlers.Inc)}>Increment</button>
+      /// ...
+    );
+  }
+```
+
+### Default Exports
+
+Each module can optionally export a default export. Default exports are marked with the keyword default; and there can only be one default export per module. default exports are imported using a different import form.
+
+The default exports are really handy. For instance, a library like React.js might have a default export of React, commonly imported under the name React. Each file may only have one default export, for example:
+
+``` ts
+  const calculateRectangle = (width: number, length: number) => {
+    return width * length;
+  }
+
+  export default calculateRectangle
+```
+
+### Import
+
+Importing is just about as easy as exporting from a module.
+
+Importing an exported declaration is done through using the import keyword. For example, considering the PI, calculateCircumference, and calculateRectangle export examples shown above, this is how we would import them into our app.ts file with the following folder structure:
+
+### Organization scheme:
+
+```ts
+TypeScript v^3.0
+├── app.ts
+├── src
+│   ├── circle.ts
+│   ├── rectangle.ts
+```
+
+```ts
+  import { PI, calculateCircumference } from './src/circle'
+  import calculateRectangle from './src/rectangle'
+
+  console.log(PI); // Prints: 3.14
+  console.log(calculateCircumference(10)); // Prints: 31.42
+  console.log(calculateRectangle(5, 10)); // Prints: 50
+
+```
+
